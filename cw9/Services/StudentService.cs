@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 
 namespace cw9.Services
 {
-    public class StudentService
+    public class StudentService : IStudentService
     {
+
     }
 }

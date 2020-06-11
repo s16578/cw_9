@@ -7,5 +7,6 @@ namespace cw9.Services
 {
     interface IStudentService
     {
+
     }
 }

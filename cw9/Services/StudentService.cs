@@ -2,6 +2,7 @@
 using cw9.DTOs.Request;
 using cw9.Model;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,7 +28,7 @@ namespace cw9.Services
             return res;
         }
 
-        public void ModifyStudent(StudentModifyRequest studentModifyRequest)
+        public void ModifyStudentDB(StudentModifyRequest studentModifyRequest)
         {
 
             var updatedStudent = new Student
@@ -37,20 +38,36 @@ namespace cw9.Services
                 LastName = studentModifyRequest.LastName
             };
 
-            db.Attach(updatedStudent);
 
-            if (updatedStudent.FirstName != null)
-            {
-                db.Entry(updatedStudent).Property("FirstName").IsModified = true;
-            }
-            if (updatedStudent.LastName != null)
-            {
-                db.Entry(updatedStudent).Property("LastName").IsModified = true;
-            }
-            db.Entry(updatedStudent).State = EntityState.Modified;
-            db.SaveChanges();
+            var student = db.Student.Where(s => s.IndexNumber == studentModifyRequest.Index).FirstOrDefault();
+            if(studentModifyRequest.FirstName != null)
+                student.LastName = studentModifyRequest.LastName;
+            if(studentModifyRequest.LastName != null)
+                student.FirstName = studentModifyRequest.FirstName;
+            //db.Student.Attach(updatedStudent);
 
+            //if (updatedStudent.FirstName != null)
+            //{
+            //    db.Entry(updatedStudent).Property(x => x.FirstName).IsModified = true;
+            //}
+            //if (updatedStudent.LastName != null)
+            //{
+            //    db.Entry(updatedStudent).Property(x => x.LastName).IsModified = true;
+            //}
+            //db.Entry(updatedStudent).State = EntityState.Modified;
             
+            db.SaveChanges();
+        }
+        public bool DeleteStudentDB(string id)
+        {
+            if(db.Student.Where(s => s.IndexNumber == id).Any())
+            {
+                var student = db.Student.Where(s => s.IndexNumber == id).FirstOrDefault();
+                db.Student.Attach(student);
+                db.Entry(student).State = EntityState.Deleted;
+                return true;
+            }
+            return false;
         }
     }
 }

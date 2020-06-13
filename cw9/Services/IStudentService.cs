@@ -12,6 +12,8 @@ namespace cw9.Services
     {
         public List<StudentResponse> AllStudents();
 
-        public void ModifyStudent(StudentModifyRequest studentModifyRequest);
+        public void ModifyStudentDB(StudentModifyRequest studentModifyRequest);
+
+        public bool DeleteStudentDB(string id);
     }
 }

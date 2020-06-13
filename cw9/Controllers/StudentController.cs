@@ -33,10 +33,26 @@ namespace cw9.Controllers
             if (student.FirstName == null && student.LastName == null)
                 return BadRequest("Missing arguments");
 
-            _service.ModifyStudent(student);
+            _service.ModifyStudentDB(student);
 
             return Ok(student);
         }
+
+        [HttpPost("id")]
+        [Route("api/students/delete")]
+        public IActionResult delteStudent(string id)
+        {
+            if(id == null)
+            {
+                return BadRequest("Missing id");
+            }
+            if (_service.DeleteStudentDB(id) == true)
+                return Ok("Student has been removed with index: " + id);
+            else
+                return BadRequest("Student with this index does not exist");
+            
+        }
+
 
         [HttpGet]
         [Route("api/test/post")]

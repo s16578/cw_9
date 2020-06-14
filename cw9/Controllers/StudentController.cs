@@ -1,7 +1,9 @@
-﻿
-using cw9.DTOs.Request;
+﻿using cw9.DTOs.Request;
+using cw9.DTOs.Response;
 using cw9.Services;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Linq.Expressions;
 
 namespace cw9.Controllers
 {
@@ -16,7 +18,7 @@ namespace cw9.Controllers
 
         [Route("api/students")]
         [HttpGet]
-        public IActionResult getStudents()
+        public IActionResult GetStudents()
         {
             var studentList = _service.AllStudents();
             if (studentList.Count < 1)
@@ -28,7 +30,7 @@ namespace cw9.Controllers
         
         [HttpPost]
         [Route("api/students/update")]
-        public IActionResult updateStudent(StudentModifyRequest student)
+        public IActionResult UpdateStudent(StudentModifyRequest student)
         {
             if (student.FirstName == null && student.LastName == null)
                 return BadRequest("Missing arguments");
@@ -38,27 +40,40 @@ namespace cw9.Controllers
             return Ok(student);
         }
 
-        [HttpPost("id")]
+        [HttpPost]
         [Route("api/students/delete")]
-        public IActionResult delteStudent(string id)
+        public IActionResult DeleteStudent(DeleteStudentRequest id)
         {
-            if(id == null)
+            if(id.Index == null)
             {
                 return BadRequest("Missing id");
             }
             if (_service.DeleteStudentDB(id) == true)
-                return Ok("Student has been removed with index: " + id);
+                return Ok("Student has been removed with index: " + id.Index);
             else
                 return BadRequest("Student with this index does not exist");
             
         }
 
 
-        [HttpGet]
-        [Route("api/test/post")]
-        public IActionResult test(StudentModifyRequest student)
+        [HttpPost]
+        [Route("api/enrollStudent")]
+        public IActionResult EnrollStudent(EnrollStudentRequest enrollStudent)
         {
-            return Ok();
+            EnrollStudentResponse response;
+            try
+            {
+                response = _service.EnrollStudent(enrollStudent);
+            }catch(InvalidOperationException op)
+            {
+                return BadRequest(op);
+            }
+
+            return Ok(response);
         }
+
+        [HttpPost]
+        [Route("api/")]
+
     }
 }

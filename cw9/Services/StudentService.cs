@@ -1,5 +1,6 @@
 ﻿using cw9.DTOs;
 using cw9.DTOs.Request;
+using cw9.DTOs.Response;
 using cw9.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -58,16 +59,122 @@ namespace cw9.Services
             
             db.SaveChanges();
         }
-        public bool DeleteStudentDB(string id)
+        public bool DeleteStudentDB(DeleteStudentRequest student)
         {
-            if(db.Student.Where(s => s.IndexNumber == id).Any())
+            if(db.Student.Where(s => s.IndexNumber == student.Index).Any())
             {
-                var student = db.Student.Where(s => s.IndexNumber == id).FirstOrDefault();
-                db.Student.Attach(student);
-                db.Entry(student).State = EntityState.Deleted;
+                var res = db.Student.Where(s => s.IndexNumber == student.Index).FirstOrDefault();
+                //db.Student.Attach(res);
+                //db.Entry(res).State = EntityState.Deleted;
+                db.Student.Remove(res);
+                db.SaveChanges();
                 return true;
             }
             return false;
+        }
+
+        public EnrollStudentResponse EnrollStudent(EnrollStudentRequest newStudent)
+        {
+            if(db.Student.Where(s => s.IndexNumber == newStudent.Index).Any())
+            {
+                throw new InvalidOperationException("Student with index already exist");
+            }
+
+            if(!db.Studies.Where(st => st.Name == newStudent.Studies).Any())
+            {
+                throw new InvalidOperationException("Studies does not exist");
+            }
+
+            int idstudy = db.Studies.Where(st => st.Name == newStudent.Studies).Select(s => s.IdStudy).FirstOrDefault();
+            int idenroll;
+            if(!db.Enrollment.Where(en => en.Semester == 1).Where(en => en.IdStudy == idstudy).Any())
+            {
+                idenroll = db.Enrollment.OrderByDescending(x => x.IdEnrollment).Select(xx => xx.IdEnrollment).First() + 1;
+                var insertEnroll = new Enrollment
+                {
+                    IdEnrollment = idenroll,
+                    Semester = 1,
+                    IdStudy = idstudy,
+                    StartDate = DateTime.Now
+                };
+                db.Enrollment.Add(insertEnroll);
+                db.SaveChanges();
+            }
+
+            idenroll = db.Enrollment.Where(en => en.Semester == 1).Where(en => en.IdStudy == idstudy).Select(x => x.IdEnrollment).FirstOrDefault();
+
+            var insertStudent = new Student
+            {
+                IndexNumber = newStudent.Index,
+                FirstName = newStudent.FirstName,
+                LastName = newStudent.LastName,
+                IdEnrollment = idenroll,
+                BirthDate = newStudent.BirthDate,
+            };
+
+            db.Student.Add(insertStudent);
+            db.SaveChanges();
+
+            return new EnrollStudentResponse { IdEnrollment = idenroll, IdStudy = idstudy, Semester = 1, StartDate = DateTime.Now};
+        }
+
+        public PromotionStudentRepsonse PromotionStudents(EnrollStudentPromotionsRequest promotionsRequest)
+        {
+            var studyName = promotionsRequest.Studies;
+            var semester = promotionsRequest.Semester;
+
+            if(!db.Studies.Where(x => x.Name == studyName).Any())
+            {
+                throw new InvalidOperationException();
+            }
+
+            var idstudy = db.Studies.Where(x => x.Name == studyName).Select(x => x.IdStudy).FirstOrDefault();
+
+            var newEnrollment = new Enrollment
+            {
+                IdEnrollment = (db.Enrollment.Max(x => x.IdEnrollment) + 1),
+                IdStudy = idstudy,
+                StartDate = DateTime.Now,
+                Semester = semester
+            };
+
+            if (!db.Enrollment.Where(x => x.IdStudy ==  idstudy).Where(x => x.Semester == semester).Any())
+            {
+                db.Enrollment.Add(newEnrollment);
+                db.SaveChanges();
+                return new PromotionStudentRepsonse
+                {
+                    IdEnrollment = newEnrollment.IdEnrollment,
+                    IdStudy = idstudy,
+                    StartDate = DateTime.Now,
+                    Semester = semester
+                };
+            }
+            else
+            {
+                var oldIdEnrollment = db.Enrollment.Where(x => x.IdStudy == idstudy).Where(x => x.Semester == semester).Select(x => x.IdEnrollment).FirstOrDefault();
+                int newIdEnrollment;
+                newEnrollment.Semester += 1;
+
+                if (!db.Enrollment.Where(x => x.IdStudy == idstudy).Where(x => x.Semester == (semester+1)).Any())
+                {
+                    db.Enrollment.Add(newEnrollment);
+                    db.SaveChanges();
+                }
+                newIdEnrollment = newEnrollment.IdEnrollment;
+
+                var students = db.Student.Where(x => x.IdEnrollment == oldIdEnrollment).ToList();
+                students.ForEach(x => x.IdEnrollment = newIdEnrollment);
+                db.SaveChanges();
+
+                return new PromotionStudentRepsonse
+                {
+                    IdEnrollment = newIdEnrollment,
+                    IdStudy = idstudy,
+                    StartDate = DateTime.Now,
+                    Semester = semester
+                };
+            }
         }
     }
 }

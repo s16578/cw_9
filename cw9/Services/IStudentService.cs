@@ -1,19 +1,20 @@
 ﻿using cw9.DTOs;
 using cw9.DTOs.Request;
-using cw9.Model;
-using System;
+using cw9.DTOs.Response;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace cw9.Services
 {
     public interface IStudentService
     {
-        public List<StudentResponse> AllStudents();
+        List<StudentResponse> AllStudents();
 
-        public void ModifyStudentDB(StudentModifyRequest studentModifyRequest);
+        void ModifyStudentDB(StudentModifyRequest studentModifyRequest);
 
-        public bool DeleteStudentDB(string id);
+        bool DeleteStudentDB(DeleteStudentRequest student);
+
+        EnrollStudentResponse EnrollStudent(EnrollStudentRequest newStudent);
+
+        PromotionStudentRepsonse PromotionStudents(EnrollStudentPromotionsRequest promotionsRequest);
     }
 }
